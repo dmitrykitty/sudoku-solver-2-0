@@ -70,7 +70,7 @@ class SudokuCNF:
         # TODO:
         # Fill `self.cnf` with correct clauses.
         # tip. just call `self._every_*` methods :)
-        raise NotImplementedError("not implemented yet"))
+        raise NotImplementedError("not implemented yet")
 
     def _at_least_one(self, propositions: Iterable[Proposition]) -> None:
         # TODO:
