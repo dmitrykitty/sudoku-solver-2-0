@@ -280,5 +280,7 @@ class SatSudokuSolver(SudokuSolver):
         #      * we should also return `None`
         #   - `True` means the solver found a solution
         #      * we should return "decoded" solution.
-        #        Use `decode` method of the SudokuCNF object.
+        #        * use `decode` method of the SudokuCNF object.
+        #        * `solver.get_model()` returns the solution, 
+        #           a list of true propositions
         raise NotImplementedError("not implemented yet")
