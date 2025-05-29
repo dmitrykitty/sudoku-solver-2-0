@@ -243,7 +243,7 @@ class SatSudokuSolver(SudokuSolver):
     A SAT-based sudoku solver using the python-sat library:
     - what is a SAT-solver: https://en.wikipedia.org/wiki/SAT_solver
 
-    - python-sat basic usage: https://pysathq.github.io/usage/\n
+    - python-sat basic usage: https://pysathq.github.io/usage/
       look especially at an example starting with `formula = CNF()`
 
     - python-sat docs: https://pysathq.github.io/docs/html/index.html#supplementary-examples-package
