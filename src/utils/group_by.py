@@ -24,4 +24,6 @@ def group_by[K, V](items: Iterable[V], key: Callable[[V], K]) -> dict[K, list[V]
     grouped_collection: dict[K, list[V]]:
         elements from items grouped into a dictionary
     """
+    # TODO:
+    # Implement the method according to the docstring.
     raise NotImplementedError("not implemented yet")
