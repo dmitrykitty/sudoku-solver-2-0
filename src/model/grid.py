@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-import math
+import math  # noqa
 import numpy as np
 import numpy.typing as npt
 
@@ -96,14 +96,40 @@ class SudokuGrid:
     _array: npt.NDArray[np.uint]
 
     def __post_init__(self) -> None:
-        raise NotImplementedError("copy from the previous lab")
+        # TODO:
+        # make sure that:
+        # - self._array is 2-dimensional
+        # - self._array is a square
+        # - self._array can be split into blocks
+        #
+        # If the _array fails any of tests,
+        # raise a ValueError
+        #
+        # tip. self._array.shape is a `shape` of the array.
+        #      It's a tuple, e.g. (3,2) is a shape of an array
+        #      with 3 rows and 2 columns.
+        arr = self._array
+        # Sprawdź, czy tablica jest 2-wymiarowa
+        if arr.ndim != 2:
+            raise ValueError("Grid must be 2-dimensional")
+        # Sprawdź, czy tablica jest kwadratowa
+        rows, cols = arr.shape
+        if rows != cols:
+            raise ValueError("Grid must be square (n x n)")
+        # Sprawdź, czy rozmiar jest kwadratem liczby całkowitej
+        size = rows
+        block_size = math.isqrt(size)
+        if block_size * block_size != size:
+            raise ValueError(
+                "Grid size must be a perfect square (blocks of equal size)"
+            )
 
     @property
     def size(self) -> int:
         """
         Returns size of the grid.
 
-        Returns
+        Return:
         --------
         size: int
             the size of the grid, e.g. 9 for a 9x9 grid.
@@ -115,38 +141,40 @@ class SudokuGrid:
         """
         Returns size of a single block.
 
-        Returns
+        Return:
         --------
         size: int
             the size of a single block, e.g. 3 for a 9x9 grid.
         """
-        raise NotImplementedError("copy from the previous lab")
+        # TODO:
+        # Implement the method according to the docstring
+        return math.isqrt(self.size)
 
-    def __getitem__(self, coords):
+    def __getitem__(self, coords: tuple[int, int]) -> np.uint:
         """
         Returns a value of the given cell in the grid.
 
-        Parameters
+        Parameters:
         -----------
-        coords
-            coordinates (row, col) of the cell/subgrid
-        Returns
+        coords: tuple[int, int]
+            coordinates (row, col) of the cell
+        Return:
         --------
-        values
-            values at the passed coordinates
+        value: np.uint
+            a numpy array with values from the specified block
         """
         return self._array[coords]
 
-    def __setitem__(self, coords, value) -> None:
+    def __setitem__(self, coords: tuple[int, int], value: int) -> None:
         """
-        Puts values in the given coordinates of the grid.
+        Puts a value in the given cell of the grid.
 
-        Parameters
+        Parameters:
         -----------
-        coords
-            coordinates of the cells
-        value
-            values to be stored ath the given coordinates
+        coords: tuple[int, int]
+            coordinates (row, col) of the cell
+        value: int
+            value to be stored in the cell
         """
         self._array[coords] = value
 
@@ -155,7 +183,7 @@ class SudokuGrid:
         Returns an enumerator over the grid elements.
         See: https://numpy.org/doc/2.2/reference/generated/numpy.ndenumerate.html
 
-        Returns
+        Return:
         --------
         enumerate: np.ndenumerate
             an enumerator over the grid
@@ -167,7 +195,7 @@ class SudokuGrid:
         Returns a 1D copy of the grid array.
         See: https://numpy.org/doc/2.2/reference/generated/numpy.ndarray.flatten.html
 
-        Returns
+        Return:
         --------
         flat_grid: npt.NDArray[np.uint]
             a flat copy of the array
@@ -178,41 +206,59 @@ class SudokuGrid:
         """
         Returns a block index for a given cell.
 
-        Parameters
+        Parameters:
         -----------
         cell_row: int
             index of the cell row
         cell_column: int
             index of the cell column
 
-        Returns
+        Return:
         --------
         block_index: int
             index of the block the specified cell belongs to
         """
-        raise NotImplementedError("copy from the previous lab")
+        # TODO:
+        # - implement the method according to the docstring
+        #
+        # tip. check the docstring of the class to know what is the block index
+        bs = self.block_size
+        block_row = cell_row // bs
+        block_col = cell_column // bs
+        return block_row * bs + block_col
 
     def block(self, block_index: int) -> npt.NDArray[np.uint]:
         """
         Returns a single block with a given index.
 
-        Parameters
+        Parameters:
         -----------
         block_index: int
             index of the block
 
-        Returns
+        Return:
         --------
         block: npt.NDArray[np.uint]
             a numpy array with values from the specified block
         """
-        raise NotImplementedError("copy from the previous lab")
+        # TODO:
+        # - implement the method according to the docstring
+        # tip 1. use array slicing: https://www.w3schools.com/python/numpy/numpy_array_slicing.asp
+        # tip 2. check the docstring of the class to know what is the block index
+        bs = self.block_size
+        n = self.size
+        blocks_per_row = n // bs  # == bs
+        block_row = block_index // blocks_per_row
+        block_col = block_index % blocks_per_row
+        row_start = block_row * bs
+        col_start = block_col * bs
+        return self._array[row_start : row_start + bs, col_start : col_start + bs]
 
     def copy(self) -> SudokuGrid:
         """
         Creates copy of the grid.
 
-        Returns
+        Return:
         -------
         copy: SudokuGrid
             a copy of the current grid
@@ -239,12 +285,46 @@ class SudokuGrid:
         -------------------------
         ```
 
-        Returns
+        Return:
         --------
         ascii_representation: str
             string containing a pretty ascii representation of the grid
         """
-        raise NotImplementedError("copy from the previous lab")
+        # TODO:
+        # Implement the method according to the docstring.
+        # - if `lines` are ill-formatted, raise a ValueError
+        # tip. there are many ways to initialize an array
+        #      the easiest is to start with normal lists:
+        #      https://numpy.org/devdocs/user/basics.creation.html#converting-python-sequences-to-numpy-arrays
+        n = self.size
+        bs = self.block_size
+        width = len(str(n))  # szerokość do wyrównania większych cyfr
+
+        # Funkcja pomocnicza: generuje reprezentację wiersza numer row
+        def format_row(row: int) -> str:
+            row_vals = [self._array[row, j] for j in range(n)]
+            blocks_str = []
+            for b in range(bs):
+                start = b * bs
+                block_vals = row_vals[start : start + bs]
+                # Formatowanie każdej liczby na stałą szerokość
+                formatted = [format(int(val), f">{width}") for val in block_vals]
+                blocks_str.append(",".join(formatted))
+            return "| " + " | ".join(blocks_str) + " |"
+
+        lines = []
+        # Pierwszy wiersz i pierwsza linia pozioma
+        first_row_str = format_row(0)
+        dashed = "-" * len(first_row_str)
+        lines.append(dashed)
+        lines.append(first_row_str)
+        # Pozostałe wiersze
+        for row in range(1, n):
+            if row % bs == 0:
+                lines.append(dashed)  # oddziel blok w poziomie
+            lines.append(format_row(row))
+        lines.append(dashed)  # zakończenie wierszy
+        return "\n".join(lines)
 
     @staticmethod
     def from_text(lines: list[str]) -> SudokuGrid:
@@ -263,14 +343,53 @@ class SudokuGrid:
         0,7,5,0,0,0,2,4,0
         ```
 
-        Parameters
+        Parameters:
         -----------
         lines: list[str]
             lines containing the textual representation
 
-        Returns
+        Return:
         ---------
         grid: SudokuGrid
             a new sudoku grid
         """
-        raise NotImplementedError("copy from the previous lab")
+
+        # TODO:
+        # Implement the method according to the docstring.
+        # - if `lines` are ill-formatted, raise a ValueError
+        # tip. there are many ways to initialize an array
+        #      the easiest is to start with normal lists:
+        #      https://numpy.org/devdocs/user/basics.creation.html#converting-python-sequences-to-numpy-arrays
+        if not lines:
+            raise ValueError("No lines provided")
+        rows_list = []
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue  # pomiń puste linie
+            parts = line.split(",")
+            if not parts:
+                raise ValueError(f"Invalid line: '{line}'")
+            int_vals = []
+            for p in parts:
+                p_str = p.strip()
+                if p_str == "":
+                    raise ValueError(f"Invalid line: '{line}'")
+                try:
+                    val = int(p_str)
+                except ValueError:
+                    raise ValueError(f"Invalid integer in line: '{line}'")
+                if val < 0:
+                    raise ValueError(f"Negative value not allowed: {val}")
+                int_vals.append(val)
+            rows_list.append(int_vals)
+        # Sprawdź, czy siatka jest kwadratowa
+        n = len(rows_list)
+        if any(len(r) != n for r in rows_list):
+            raise ValueError("Grid must be square and all rows same length")
+        # Konwersja na numpy array
+        try:
+            arr = np.array(rows_list, dtype=np.uint)
+        except Exception as e:
+            raise ValueError("Could not create grid array") from e
+        return SudokuGrid(arr)

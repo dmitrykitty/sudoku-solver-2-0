@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod  # noqa
 from src.model.grid import SudokuGrid
 from timeit import default_timer as timer
 
@@ -29,7 +29,7 @@ class SudokuSolver(ABC):
         implements the specific solving algorithm
 
     Class Methods:
-    --------------
+    --––––––––––––
     solve(cls, puzzle: SudokuGrid, time_limit: float, *args, **kwargs) -> SudokuGrid | None:
         an interface method supposed dispatch correct algorithm
     """
@@ -47,7 +47,7 @@ class SudokuSolver(ABC):
         """
         Checks whether the available time has run out.
 
-        Returns
+        Return:
         --------
         timeout: bool
             - `True` if solver has missed the deadline
@@ -56,7 +56,29 @@ class SudokuSolver(ABC):
         return timer() > self._deadline
 
     # TODO:
-    # Copy the abstract `run_algorithm` method from the previous lab
+    # Create an abstract method matching the docstring
+    # with name: `run_algorithm`
+    #
+    # guide: https://www.geeksforgeeks.org/abstract-classes-in-python/
+    # docs: https://docs.python.org/3/library/abc.html#abc.abstractmethod
+    #
+    # tip. the method definition has to have something below, e.g. `pass`, `...`
+    #      the docstring is also something :)
+    @abstractmethod
+    def run_algorithm(self) -> SudokuGrid | None:
+        """A method implementing the solving algorithm.
+
+        Return:
+        --------
+        solution: SudokuGrid | None:
+            - a sudoku solution if it has been found
+            - `None` if the solution has not been found
+
+        Raises:
+        -------
+        timeout_error: TimeoutError
+            when the available time runs out
+        """
 
     @classmethod
     def solve(
@@ -66,18 +88,7 @@ class SudokuSolver(ABC):
         Solves the given sudoku puzzle within a specified time limit using
         the solver implement within the class `cls`.
 
-        Returns
-        --------
-        solution: SudokuGrid | None:
-            - a sudoku solution if it has been found
-            - `None` if the solution has not been found
-
-        Raises
-        -------
-        timeout_error: TimeoutError
-            when the available time runs out
-
-        Parameters
+        Parameters:
         -----------
         puzzle: SudokuGrid
             a sudoku puzzle to be solved
@@ -87,5 +98,25 @@ class SudokuSolver(ABC):
             extra arguments passed to the solver constructor
         **kwargs: Any
             extra named arguments passed to the solver constructor
+
+        Return:
+        --------
+        solution: SudokuGrid | None:
+            - a sudoku solution if it has been found
+            - `None` if the solution has not been found
+
+        Raises:
+        -------
+        timeout_error: TimeoutError
+            when the available time runs out
         """
-        raise NotImplementedError("copy from the previous lab")
+        # TODO:
+        # this method should behave according to the docstring, i.e.
+        # 1. create a solver of type `cls`
+        #   - solver constructor has `puzzle` and `time_limit` args,
+        #     but the constructor may be extended by the subclass.
+        #     Therefore, pass forward also args and kwargs.
+        #     Some explanation:https://www.geeksforgeeks.org/args-kwargs-python/
+        # 2. return result of the `run_algorithm` method
+        solver = cls(puzzle, time_limit, *args, **kwargs)
+        return solver.run_algorithm()

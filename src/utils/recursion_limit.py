@@ -1,5 +1,4 @@
-import sys
-from typing import Literal
+import sys  # noqa
 
 
 class recursion_limit_set_to:
@@ -22,15 +21,31 @@ class recursion_limit_set_to:
         """
         Initialize the context manager.
 
-        Parameters
+        Parameters:
         -----------
         limit: int
             a desired recursion limit
         """
-        raise NotImplementedError("copy from the previous lab")
+
+        # TODO:
+        # 1. set the `limit` attribute using the parameter
+        # 2. set the `original_limit` attribute using a correct function form `sys` module
+        #
+        # tip. read class documentation
+        self.limit = limit
+        # 2. set the `original_limit` attribute using a correct function from `sys` module
+        # We store the recursion limit so it can be restored on exit
+        self.original_limit = sys.getrecursionlimit()
 
     def __enter__(self, *args, **kwargs) -> None:
-        raise NotImplementedError("copy from the previous lab")
+        # TODO:
+        # Override the recursion limit according to the class documentation
+        sys.setrecursionlimit(self.limit)
+        return None
 
-    def __exit__(self, *args) -> Literal[False]:
-        raise NotImplementedError("copy from the previous lab")
+    def __exit__(self, *args) -> bool:
+        # TODO:
+        # Restore the original recursion limit according to the class documentation
+        sys.setrecursionlimit(self.original_limit)
+        # Returning False so that any exception is propagated
+        return False
