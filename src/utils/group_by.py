@@ -1,4 +1,5 @@
 from typing import Iterable, Callable
+from collections import defaultdict
 
 
 def group_by[K, V](items: Iterable[V], key: Callable[[V], K]) -> dict[K, list[V]]:
@@ -26,4 +27,7 @@ def group_by[K, V](items: Iterable[V], key: Callable[[V], K]) -> dict[K, list[V]
     """
     # TODO:
     # Implement the method according to the docstring.
-    raise NotImplementedError("not implemented yet")
+    grouped: dict[K, list[V]] = defaultdict(list)
+    for item in items:
+        grouped[key(item)].append(item)
+    return dict(grouped)
