@@ -70,7 +70,10 @@ class SudokuCNF:
         # TODO:
         # Fill `self.cnf` with correct clauses.
         # tip. just call `self._every_*` methods :)
-        raise NotImplementedError("not implemented yet")
+        self._every_cell_has_a_single_value()
+        self._every_row_contains_unique_values()
+        self._every_col_contains_unique_values()
+        self._every_block_contains_unique_values()
 
     def _at_least_one(self, propositions: Iterable[Proposition]) -> None:
         # TODO:
@@ -84,7 +87,9 @@ class SudokuCNF:
         #   https://pysathq.github.io/docs/html/api/formula.html#pysat.formula.CNF
         # tip 3. given propositions `p`, `q`,` s` you just want to add a clause:
         #   `p or q or s`
-        raise NotImplementedError("not implemented yet")
+        clause = [p.id for p in propositions]
+        if clause:
+            self.cnf.append(clause)
 
     def _at_most_one(self, propositions: Iterable[Proposition]) -> None:
         # TODO:
@@ -100,7 +105,9 @@ class SudokuCNF:
         #   ~s or ~q
         #   This way only one proposition can be true. For example, if `p` is true
         #   then ~q and ~s also have to be true.
-        raise NotImplementedError("not implemented yet")
+        props = list(propositions)
+        for p, q in itertools.combinations(props, 2):
+            self.cnf.append([-p.id, -q.id])
 
     def _exactly_one(self, propositions: Iterable[Proposition]) -> None:
         # TODO:
@@ -108,7 +115,11 @@ class SudokuCNF:
         # proposition is true.
         #
         # tip. you can use other already implemented methods :)
-        raise NotImplementedError("not implemented yet")
+        props = list(propositions)
+        if not props:
+            return
+        self._at_least_one(props)
+        self._at_most_one(props)
 
     def _every_cell_has_a_single_value(self):
         # This method is implemented to show the idea, how the encoding works.
@@ -140,7 +151,11 @@ class SudokuCNF:
         #       `cell at coords R,2 has value V`
         #       ...
         #   And **at most one** of them can be true.
-        raise NotImplementedError("not implemented yet")
+        row_val_groups = group_by(
+            self.propositions.values(), lambda p: (p.coords.row, p.val)
+        )
+        for props in row_val_groups.values():
+            self._at_most_one(props)
 
     def _every_col_contains_unique_values(self):
         # TODO:
@@ -148,7 +163,11 @@ class SudokuCNF:
         #
         # tip 1. read comment in `_every_cell_has_a_single_value`
         #        just replace rows with columns
-        raise NotImplementedError("not implemented yet")
+        col_val_groups = group_by(
+            self.propositions.values(), lambda p: (p.coords.col, p.val)
+        )
+        for props in col_val_groups.values():
+            self._at_most_one(props)
 
     def _every_block_contains_unique_values(self):
         # TODO:
@@ -156,7 +175,11 @@ class SudokuCNF:
         #
         # tip 1. read comment in `_every_cell_has_a_single_value`
         #        just replace rows with blocks
-        raise NotImplementedError("not implemented yet")
+        block_val_groups = group_by(
+            self.propositions.values(), lambda p: (p.coords.block, p.val)
+        )
+        for props in block_val_groups.values():
+            self._at_most_one(props)
 
     @staticmethod
     def encode(puzzle: SudokuGrid) -> SudokuCNF:
@@ -201,7 +224,12 @@ class SudokuCNF:
         #    assign a corresponding value at the corresponding coordinates
         #    in the puzzle copy
         # 3. return the filled grid
-        raise NotImplementedError("not implemented yet")
+        grid = self.puzzle.copy()
+        for pid in results:
+            if pid > 0 and pid in self.propositions:
+                prop = self.propositions[pid]
+                grid[prop.coords.row, prop.coords.col] = prop.val
+        return grid
 
     @staticmethod
     def _possible_propositions(puzzle: SudokuGrid) -> dict[int, Proposition]:
@@ -235,7 +263,40 @@ class SudokuCNF:
         # tip 1. we create propositions only for **valid** value assignments:
         #    you may want to look at your code `State.from_grid` in `first_fail_solver.py`
         #    to look how to calculate cells' valid values.
-        raise NotImplementedError("not implemented yet")
+        propositions: dict[int, Proposition] = {}
+        next_id = 1
+        size = puzzle.size
+        all_vals = set(range(1, size + 1))
+
+        # Precompute sets of used values for rows, cols, blocks
+        row_used = [set() for _ in range(size)]
+        col_used = [set() for _ in range(size)]
+        block_used = [set() for _ in range(size)]
+        for (r, c), val in puzzle.enumerate():
+            v = int(val)
+            if v != 0:
+                b = puzzle.block_index(r, c)
+                row_used[r].add(v)
+                col_used[c].add(v)
+                block_used[b].add(v)
+
+        for (r, c), val in puzzle.enumerate():
+            b = puzzle.block_index(r, c)
+            if int(val) != 0:
+                v = int(val)
+                propositions[next_id] = Proposition(
+                    coords=Coordinates(r, c, b), val=v, id=next_id
+                )
+                next_id += 1
+                continue
+            allowed = all_vals - row_used[r] - col_used[c] - block_used[b]
+            for v in sorted(allowed):
+                propositions[next_id] = Proposition(
+                    coords=Coordinates(r, c, b), val=v, id=next_id
+                )
+                next_id += 1
+
+        return propositions
 
 
 class SatSudokuSolver(SudokuSolver):
@@ -283,4 +344,17 @@ class SatSudokuSolver(SudokuSolver):
         #        * use `decode` method of the SudokuCNF object.
         #        * `solver.get_model()` returns the solution, 
         #           a list of true propositions
-        raise NotImplementedError("not implemented yet")
+        sudoku_cnf = SudokuCNF.encode(self._puzzle)
+        with Solver(bootstrap_with=sudoku_cnf.cnf) as solver:
+            timer_obj = Timer(self._time_limit, solver.interrupt)
+            timer_obj.start()
+            status = solver.solve_limited(expect_interrupt=True)
+            timer_obj.cancel()
+
+            if status is None:
+                raise TimeoutError
+            if status is False:
+                return None
+            # status True
+            model = solver.get_model()
+        return sudoku_cnf.decode(model)
