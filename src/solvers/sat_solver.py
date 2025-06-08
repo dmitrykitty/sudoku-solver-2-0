@@ -281,14 +281,9 @@ class SudokuCNF:
                 block_used[b].add(v)
 
         for (r, c), val in puzzle.enumerate():
-            b = puzzle.block_index(r, c)
             if int(val) != 0:
-                v = int(val)
-                propositions[next_id] = Proposition(
-                    coords=Coordinates(r, c, b), val=v, id=next_id
-                )
-                next_id += 1
                 continue
+            b = puzzle.block_index(r, c)
             allowed = all_vals - row_used[r] - col_used[c] - block_used[b]
             for v in sorted(allowed):
                 propositions[next_id] = Proposition(
