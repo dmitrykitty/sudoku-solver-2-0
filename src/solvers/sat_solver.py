@@ -342,7 +342,7 @@ class SatSudokuSolver(SudokuSolver):
         #   - `True` means the solver found a solution
         #      * we should return "decoded" solution.
         #        * use `decode` method of the SudokuCNF object.
-        #        * `solver.get_model()` returns the solution, 
+        #        * `solver.get_model()` returns the solution,
         #           a list of true propositions
         sudoku_cnf = SudokuCNF.encode(self._puzzle)
         with Solver(bootstrap_with=sudoku_cnf.cnf) as solver:
